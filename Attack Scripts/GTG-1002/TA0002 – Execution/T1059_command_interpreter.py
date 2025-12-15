@@ -1,6 +1,6 @@
 # < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
 # T1059 - Command and Scripting Interpreter
-# Objective: Simulate execution of commands via command-line interfaces.
+# Objective: Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. This script simulates running commands via cmd.exe and powershell.exe.
 
 # t1059_command_interpreter.py
 import subprocess

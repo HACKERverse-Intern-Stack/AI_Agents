@@ -1,6 +1,6 @@
 # < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
 # T1590 - Gather Victim Host Information
-# Objective: Perform reconnaissance to gather information about the target host.
+# Objective: Adversaries may gather victim host information to inform follow-on behaviors. This script simulates a simple DNS query to get the IP address of a target domain.
 
 # t1590_gather_host_info.py
 import socket

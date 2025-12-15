@@ -1,6 +1,6 @@
 # < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
 # T1105 - Ingress Tool Transfer
-# Objective: Simulate the transfer of tools or files from a remote system to a compromised host.
+# Objective: Adversaries may transfer tools or other files from an external system into a compromised environment. This script simulates downloading a file from the internet, a common tactic for bringing in malware.
 
 # t1105_ingress_tool_transfer.py
 import requests
