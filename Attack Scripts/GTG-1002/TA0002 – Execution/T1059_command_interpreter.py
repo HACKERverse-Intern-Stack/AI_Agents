@@ -1,3 +1,7 @@
+# < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
+# T1059 - Command and Scripting Interpreter
+# Objective: Simulate execution of commands via command-line interfaces.
+
 # t1059_command_interpreter.py
 import subprocess
 import platform

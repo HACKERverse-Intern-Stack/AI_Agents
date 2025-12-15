@@ -1,3 +1,7 @@
+# < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
+# T1590 - Gather Victim Host Information
+# Objective: Perform reconnaissance to gather information about the target host.
+
 # t1590_gather_host_info.py
 import socket
 

@@ -1,3 +1,7 @@
+# < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
+# T1105 - Ingress Tool Transfer
+# Objective: Simulate the transfer of tools or files from a remote system to a compromised host.
+
 # t1105_ingress_tool_transfer.py
 import requests
 import os

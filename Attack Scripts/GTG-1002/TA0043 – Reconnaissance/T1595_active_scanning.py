@@ -1,3 +1,7 @@
+# < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
+# T1595 - Active Scanning
+# Objective: Perform active scanning to identify vulnerabilities on target systems.
+
 # t1595_active_scanning.py
 import socket
 import sys

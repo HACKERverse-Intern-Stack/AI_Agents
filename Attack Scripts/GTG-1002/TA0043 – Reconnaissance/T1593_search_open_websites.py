@@ -1,3 +1,7 @@
+# < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
+# T1593 - Search Open Websites
+# Objective: Perform reconnaissance by searching open websites for sensitive information.
+
 # t1593_search_open_websites.py
 import requests
 import urllib.parse
