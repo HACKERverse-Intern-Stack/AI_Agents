@@ -31,7 +31,7 @@ def query_registry(target, username, password, domain):
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./t1012_query_registry.py <target> <username> <password> <domain>")
+        print("Usage: ./T1012_query_registry.py <target> <username> <password> <domain>")
         sys.exit(1)
 
     query_registry(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

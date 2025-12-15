@@ -45,7 +45,7 @@ def enumerate_users(target, username, password, domain):
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./t1087_account_discovery.py <target> <username> <password> <domain>")
+        print("Usage: ./T1087_account_discovery.py <target> <username> <password> <domain>")
         sys.exit(1)
 
     enumerate_users(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

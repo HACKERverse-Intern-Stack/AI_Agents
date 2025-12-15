@@ -25,7 +25,7 @@ def run_system_info(target, username, password, domain):
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./t1082_system_info_discovery.py <target> <username> <password> <domain>")
+        print("Usage: ./T1082_system_info_discovery.py <target> <username> <password> <domain>")
         sys.exit(1)
     
     run_system_info(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
