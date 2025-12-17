@@ -37,7 +37,7 @@ def automated_collection(target, username, password, domain):
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./t1119_automated_collection.py <target> <username> <password> <domain>")
+        print("Usage: ./T1119_automated_collection.py <target> <username> <password> <domain>")
         sys.exit(1)
 
     automated_collection(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

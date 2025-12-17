@@ -34,8 +34,8 @@ def upload_dll(target, username, password, domain, dll_path, remote_path):
 
 if __name__ == '__main__':
     if len(sys.argv) != 6:
-        print("Usage: ./t1203_dll_hijack.py <target> <username> <password> <domain> <remote_path>")
-        print("Example: ./t1203_dll_hijack.py 192.168.1.100 user pass CORP 'C:\\Program Files\\VulnerableApp'")
+        print("Usage: ./T1203_dll_hijack.py <target> <username> <password> <domain> <remote_path>")
+        print("Example: ./T1203_dll_hijack.py 192.168.1.100 user pass CORP 'C:\\Program Files\\VulnerableApp'")
         print("Note: You must create 'malicious.dll' first.")
         sys.exit(1)
     

@@ -58,7 +58,7 @@ def check_rdp_status(target, username, password, domain):
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./t1021_rdp_check.py <target> <username> <password> <domain>")
+        print("Usage: ./T1021_rdp_check.py <target> <username> <password> <domain>")
         print("Note: This script only checks for RDP availability. Use an RDP client to connect.")
         sys.exit(1)
 
