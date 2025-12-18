@@ -45,7 +45,7 @@ def simulate_valid_account_use():
             print(f"[!] An error occurred: {e}")
     else: # Linux/macOS
         print("[-] This simulation is for Windows. On Linux, you would use 'smbclient'.")
-        print(f"[*] Example command: smbclient //{SHARE_PATH.replace('\\\\', '')} -U {USERNAME}%{PASSWORD}")
+        print(f"[*] Example command: smbclient //{SHARE_PATH.replace(chr(92), '/')} "f"-U {USERNAME}%{PASSWORD}")
 
 
 if __name__ == "__main__":
