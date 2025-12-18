@@ -20,7 +20,7 @@ def scan_port(host, port, open_ports):
     If successful, it adds the port to the list of open ports.
     """
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Attempts TCP connection
         s.settimeout(TIMEOUT)
         result = s.connect_ex((host, port))
         if result == 0:
