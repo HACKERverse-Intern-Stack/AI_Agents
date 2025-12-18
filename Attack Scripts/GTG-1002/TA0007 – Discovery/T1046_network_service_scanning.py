@@ -9,9 +9,9 @@ import threading
 import time
 
 # --- Simulation Configuration ---
-TARGET_HOST = "127.0.0.1"  # Use localhost for safe simulation
+TARGET_HOST = input("Enter the specific IP address of target host: ") # Grab user input of target ip address
 # Common ports to scan
-PORTS_TO_SCAN = [21, 22, 23, 53, 80, 110, 135, 139, 143, 443, 445, 993, 995, 1433, 3389]
+PORTS_TO_SCAN = [20,21,22,23,25,53,67,68,69,80,88,110,111,119,123,135,137,138,139,143,161,162,179,194,389,443,445,464,465,500,514,515,520,587,636,646,989,990,993,995,1194,1701,1723,1935,2049,2375,2376,27015,3074,3268,3269,3389,3784,3785,4500,5222,5900,6443,6667,8080,9000]
 TIMEOUT = 1 # Timeout for each connection attempt in seconds
 
 def scan_port(host, port, open_ports):
