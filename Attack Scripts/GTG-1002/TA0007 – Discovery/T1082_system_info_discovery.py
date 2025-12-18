@@ -2,10 +2,10 @@
 # T1082 - System Information Discovery
 # Objective: Gather detailed system configuration. This script uses WMI over SMB to execute systeminfo remotely.
 
-#!/usr/bin/env python3
-import sys from impacket.dcerpc.v5 
-import transport, samr from impacket.examples.secretsdump 
-import RemoteOperations
+# !/usr/bin/env python3
+import sys 
+from impacket.dcerpc.v5 import transport, samr 
+from impacket.examples.secretsdump import RemoteOperations
 
 def run_system_info(target_ip, username, password, domain):
     rpc_transport = None
