@@ -22,7 +22,7 @@ def simulate_obfuscation(data, key, output_path):
     print(f"[*] Using XOR key: 0x{key:02x}")
     
     # 1. Obfuscate the data
-    obfuscated_bytes = bytes([b ^^ key for b in data.encode('utf-8')])
+    obfuscated_bytes = bytes([b ^ key for b in data.encode('utf-8')])
     print(f"[*] Obfuscated bytes (hex): {obfuscated_bytes.hex()}")
     
     # 2. Save the obfuscated data to a file
@@ -33,7 +33,7 @@ def simulate_obfuscation(data, key, output_path):
         
         # 3. Simulate de-obfuscation (what the malware would do at runtime)
         print("[*] Simulating runtime de-obfuscation...")
-        deobfuscated_bytes = bytes([b ^^ key for b in obfuscated_bytes])
+        deobfuscated_bytes = bytes([b ^ key for b in obfuscated_bytes])
         deobfuscated_command = deobfuscated_bytes.decode('utf-8')
         print(f"[+] De-obfuscated command: '{deobfuscated_command}'")
         
