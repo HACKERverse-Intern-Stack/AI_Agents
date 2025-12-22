@@ -3,48 +3,59 @@
 # Objective:  Adversaries may scan victims for vulnerabilities that can be leveraged for exploitation. This script simulates scanning a target for open ports and checking for common service banners.
 
 # t1595_active_scanning.py
-import socket
-import sys
-import time
+import nmap
 
 # --- Simulation Configuration ---
-TARGET_HOST = "127.0.0.1"  # Use localhost for safe simulation
-TARGET_PORT = 445  # Commonly targeted SMB port
-TIMEOUT = 2
-
-def simulate_vulnerability_scan(host, port):
+def active_scan(target):
     """
-    Simulates T1595 by attempting to grab a service banner from a known port.
-    This is a benign action that mimics the reconnaissance step of an attacker.
+    Perform an active scan (T1595) on the specified target.
+    
+    Args:
+        target (str): IP address or range to scan (e.g., '192.168.1.1' or '192.168.1.1/24').
+    
+    Returns:
+        dict: Scan results with open ports and services.
     """
-    print(f"[*] T1595 Simulation: Active Scanning for vulnerabilities on {host}:{port}")
+    nm = nmap.PortScanner()
+    
     try:
-        # Create a TCP socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(TIMEOUT)
+        print(f"[*] Scanning {target}...")
+        nm.scan(target, arguments='-sS -O')  # SYN scan with OS detection
         
-        # Attempt to connect to the target port
-        result = s.connect_ex((host, port))
+        results = {}
+        for host in nm.all_hosts():
+            results[host] = {
+                'state': nm[host].state(),
+                'protocols': nm[host].all_protocols(),
+                'ports': {}
+            }
+            
+            for proto in nm[host].all_protocols():
+                ports = nm[host][proto].keys()
+                for port in ports:
+                    port_info = nm[host][proto][port]
+                    results[host]['ports'][port] = {
+                        'state': port_info['state'],
+                        'service': port_info.get('name', 'unknown'),
+                        'product': port_info.get('product', 'unknown'),
+                        'version': port_info.get('version', 'unknown')
+                    }
         
-        if result == 0:
-            print(f"[+] Port {port} is OPEN. Attempting to grab service banner...")
-            # Send a simple probe to elicit a response (e.g., for HTTP, FTP, etc.)
-            # For SMB, a simple connection is often enough to get a banner from the OS.
-            s.send(b"\x00\x00\x00\x85\xff\x53\x4d\x42\x72\x00\x00\x00\x00\x08\x01\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x06\x00\x00\x01\x00\x00\x81\x00\x02\x50\x43\x20\x4e\x45\x54\x57\x4f\x52\x4b\x20\x50\x52\x4f\x47\x52\x41\x4d\x20\x31\x2e\x30\x00\x02\x4d\x49\x43\x52\x4f\x53\x4f\x46\x54\x20\x4e\x45\x54\x57\x4f\x52\x4b\x53\x20\x31\x2e\x30\x33\x00")
-            banner = s.recv(1024)
-            if banner:
-                print(f"[!] Service Banner Received: {banner.strip()}")
-            else:
-                print("[!] No banner received on open port.")
-        else:
-            print(f"[-] Port {port} is closed.")
-
-    except socket.timeout:
-        print(f"[-] Connection to {host}:{port} timed out.")
+        return results
+    
     except Exception as e:
-        print(f"[!] An error occurred: {e}")
-    finally:
-        s.close()
+        print(f"[!] Error during scan: {e}")
+        return None
 
 if __name__ == "__main__":
-    simulate_vulnerability_scan(TARGET_HOST, TARGET_PORT)
+    target = input("Enter target IP or range (e.g., '192.168.1.1/24'): ")
+    scan_results = active_scan(target)
+    
+    if scan_results:
+        print("\n[+] Scan Results:")
+        for host, data in scan_results.items():
+            print(f"\nHost: {host} ({data['state']})")
+            for port, info in data['ports'].items():
+                print(f"  Port {port}/{info['state']}: {info['service']} ({info['product']} {info['version']})")
+    else:
+        print("[!] No results or scan failed.")
