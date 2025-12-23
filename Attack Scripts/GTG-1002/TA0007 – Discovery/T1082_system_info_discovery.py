@@ -79,7 +79,7 @@ def run_system_info(target_ip, username, password):
                 print(f"[-] Error disconnecting transport: {e}")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         print("Usage: ./T1082_system_info_discovery.py <target IP> <username> <password>")
         sys.exit(1)
 
