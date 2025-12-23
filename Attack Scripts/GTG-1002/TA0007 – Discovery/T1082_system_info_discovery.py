@@ -5,12 +5,12 @@
 # !/usr/bin/env python3
 import sys
 from impacket.dcerpc.v5 import transport, samr
-from impacket.examples.secretsdump import RemoteOperations
+from impacket.dcerpc.v5.rpcrt import DCERPCException
 
 def run_system_info(target_ip, username, password):
     rpc_transport = None
     dce = None
-    remote_ops = None # Initialize remote_ops to None
+    server_handle = None
 
     try:
         print(f"[*] Attempting to get system info from {target_ip}...")
@@ -20,40 +20,50 @@ def run_system_info(target_ip, username, password):
 
         # 2. Create the main transport object
         rpc_transport = transport.DCERPCTransportFactory(string_binding)
+        
+        # 3. Set credentials. The domain is omitted for local account authentication.
+        rpc_transport.set_credentials(username, password)
 
-        # 3. Set credentials on the transport
-        if username and password:
-            rpc_transport.set_credentials(username, password)
-
-        # 4. Connect the main transport
+        # 4. Connect and bind
         rpc_transport.connect()
         print("[*] Main transport connected.")
-
-        # 5. Initiate the SAMR connection.
+        
         dce = rpc_transport.get_dce_rpc()
         dce.connect()
         dce.bind(samr.MSRPC_UUID_SAMR)
         print("[*] SAMR connection established.")
 
-        # 6. Pass BOTH the main transport and the SAMR connection object to RemoteOperations
-        remote_ops = RemoteOperations(rpc_transport, dce)
+        # 5. Use SAMR calls directly to get server info
+        # First, connect to the SAMR service on the remote server
+        server_handle = samr.hSamrConnect(dce, f"\\\\{target_ip}")['ServerHandle']
+        print("[*] Connected to SAMR server.")
 
-        # 7. Use the remote_ops object to get machine info
-        remote_ops.getMachineInfo()
-        print("[+] System information retrieved successfully.")
+        # Now, query the server for its information
+        print("[*] Querying server for information...")
+        server_info = samr.hSamrQueryInformationServer(dce, server_handle, samr.SAM_SERVER_INFORMATION)
 
-        # Print the info stored in the class
-        if hasattr(remote_ops, 'MachineInfo'):
-            for key, value in remote_ops.MachineInfo.items():
-                print(f" {key}: {value}")
+        # Extract and print the details
+        info_data = server_info['ServerInfo']
+        print("\n[+] System Information Retrieved Successfully!")
+        print(f"  Server Name: {info_data['ServerName']}")
+        print(f"  Domain Name: {info_data['DomainName']}")
 
+    except DCERPCException as e:
+        print(f"[-] A DCE/RPC error occurred: {e}")
+        print("[*] This could be due to permissions or an issue with the SAMR pipe.")
     except Exception as e:
-        print(f"[-] An error occurred: {e}")
+        print(f"[-] An unexpected error occurred: {e}")
 
     finally:
-        # 8. Clean up connections safely
-        # The order of disconnection matters. Disconnect the higher-level objects first.
+        # 6. Clean up connections safely
         print("[*] Cleaning up connections...")
+        if server_handle:
+            try:
+                samr.hSamrCloseHandle(dce, server_handle)
+                print("[*] SAMR server handle closed.")
+            except Exception as e:
+                print(f"[-] Error closing SAMR handle: {e}")
+
         if dce:
             try:
                 dce.disconnect()
