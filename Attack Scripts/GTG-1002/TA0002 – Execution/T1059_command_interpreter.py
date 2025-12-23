@@ -6,39 +6,51 @@
 import subprocess
 import platform
 
-def simulate_cmd_execution():
-    """Simulates T1059.001 (Command Prompt) execution."""
-    command = "echo T1059.001: Executing via cmd.exe"
-    print(f"[*] T1059.001 Simulation: Executing command: '{command}'")
-    try:
-        # Using os.system to directly invoke the system's shell
-        subprocess.run(command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[!] Command failed with exit code {e.returncode}")
-    except Exception as e:
-        print(f"[!] An error occurred: {e}")
+# --- Simulation Configuration ---
+TARGET_IP = "192.168.227.139"  # Target Windows machine IP
+SHARE_NAME = "LABSHARE"           # Default admin share
+USERNAME = "labadmin"           # A valid or guessed username
+PASSWORD = "Password123!"   # A valid or guessed password
 
-def simulate_powershell_execution():
-    """Simulates T1059.001 (PowerShell) execution."""
-    # A common obfuscation technique is to encode commands
-    command = "Write-Host 'T1059.001: Executing via PowerShell'"
-    print(f"[*] T1059.001 Simulation: Executing PowerShell command: '{command}'")
+def simulate_remote_command():
+    """
+    Simulates T1059 from a Linux host by using 'smbclient' to list a directory
+    on a Windows target. This requires 'smbclient' to be installed.
+    """
+    print(f"[*] T1059 Simulation: Executing remote command on Windows target {TARGET_IP} from Linux.")
+    
+    if platform.system() == "Windows":
+        print("[-] This simulation script is designed to be run from a Linux host.")
+        return
+
     try:
-        if platform.system() == "Windows":
-            # Direct execution
-            subprocess.run(["powershell.exe", "-Command", command], check=True)
-            
-            # Encoded execution (more evasive)
-            encoded_command = subprocess.run(["powershell.exe", "-Command", f"[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('{command}'))"], capture_output=True, text=True).stdout.strip()
-            print(f"[*] Executing encoded command: {encoded_command}")
-            subprocess.run(["powershell.exe", "-EncodedCommand", encoded_command], check=True)
-        else:
-            print("[-] PowerShell is not available on this platform.")
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print(f"[!] PowerShell command failed: {e}")
+# The command to execute: list the contents of the Windows directory
+        command_to_run = "dir"
+        
+        # Construct the smbclient command
+        # The password is provided via a pipe to avoid it showing in 'ps'
+        full_command = f"smbclient //{TARGET_IP}/LABSHARE -U {USERNAME}%{PASSWORD} -c '{command_to_run}'"
+
+        
+        print(f"[*] Executing: smbclient //{TARGET_IP}/{SHARE_NAME} -U {USERNAME}%{PASSWORD} -c '{command_to_run}'")
+        
+        # Execute the command
+        result = subprocess.run(full_command, shell=True, capture_output=True, text=True, timeout=10)
+        
+        print(f"[+] Command executed with exit code: {result.returncode}")
+        if result.stdout:
+            print("[!] SMB Client STDOUT:")
+            print(result.stdout)
+        if result.stderr:
+            print("[!] SMB Client STDERR:")
+            print(result.stderr)
+
+    except FileNotFoundError:
+        print("[-] 'smbclient' command not found. Please install samba-client (e.g., 'sudo apt-get install smbclient').")
+    except subprocess.TimeoutExpired:
+        print("[!] Command timed out. The target may be unreachable or blocking the connection.")
     except Exception as e:
         print(f"[!] An error occurred: {e}")
 
 if __name__ == "__main__":
-    simulate_cmd_execution()
-    simulate_powershell_execution()
+    simulate_remote_command()

