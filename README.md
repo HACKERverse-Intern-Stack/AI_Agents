@@ -1,7 +1,7 @@
 # AI_Agents
 This repository includes scripts of attack AI agents 
 
-To host test server on Windows VM, use this command on Powershell while running as an administrator.
+To host test server on Windows VM, use this command on Powershell while running as an administrator. Shown below:
 <br>
 ```
 $listener = [System.Net.Sockets.TcpListener]::new(8080)
