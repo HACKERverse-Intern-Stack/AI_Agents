@@ -5,13 +5,13 @@ import socket
 # --- Configuration ---
 # TARGET CONFIGURATION
 # Replace with the IP/hostname of your test VM
-TARGET_HOST = "192.168.1.10" 
+TARGET_HOST = "192.168.44.129" 
 TARGET_PORT = 22
 
 # CREDENTIAL LISTS
 # In a real scenario, these would be much larger and more targeted.
-usernames = ["admin", "root", "user", "test", "vagrant"]
-passwords = ["password", "123456", "admin", "root", "vagrant", "letmein", "P@ssw0rd"]
+usernames = ["die","admin", "root", "user", "test", "vagrant"]
+passwords = ["die", "password", "123456", "admin", "root", "vagrant", "letmein", "P@ssw0rd"]
 
 # COMMAND TO EXECUTE ON SUCCESSFUL LOGIN
 # This simulates an attacker running reconnaissance.
