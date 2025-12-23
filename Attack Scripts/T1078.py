@@ -6,7 +6,7 @@ import socket
 # TARGET CONFIGURATION
 # Replace with the IP/hostname of your test VM
 TARGET_HOST = "192.168.44.129" 
-TARGET_PORT = 8080
+TARGET_PORT = 22
 
 # CREDENTIAL LISTS
 # In a real scenario, these would be much larger and more targeted.
