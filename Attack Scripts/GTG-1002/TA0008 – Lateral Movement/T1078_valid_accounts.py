@@ -23,10 +23,13 @@ def run_command(command, username=None, password=None, host=None):
             # Local execution (this part remains the same)
             print(f"[+] Running command locally: {command}")
             result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
+        
         if result.returncode == 0:
-            print("[+] Command executed successfully!")
-            print(result.stdout)
+            if result.stdout == "":
+                print("CANNOT GET OUTPUT. Port 445 (SMB service) potentially closed")
+            else:
+                print("[+] Command executed successfully!")
+                print(result.stdout)
         else:
             print(f"[-] Error executing command.")
             print(f"[-] Return Code: {result.returncode}")
