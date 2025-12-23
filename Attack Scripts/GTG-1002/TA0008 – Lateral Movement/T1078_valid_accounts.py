@@ -13,8 +13,7 @@ from getpass import getpass
 def run_command(command, username=None, password=None, host=None):
     try:
         if username and password and host:
-            # Use the --json flag for cleaner parsing
-            cmd = f"crackmapexec smb {host} -u '{username}' -p '{password}' -x '{command}' --json"
+            cmd = f"crackmapexec smb {host} -u '{username}' -p '{password}' -x '{command}'"
             print(f"[+] Running command on {host} as {username}: {command}")
             print(f"[*] Executing: {cmd}")
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -24,29 +23,20 @@ def run_command(command, username=None, password=None, host=None):
 
         if result.returncode == 0:
             print("[+] Command executed successfully!")
+            print("--- FULL CRACKMAPEXEC OUTPUT ---")
+            print(result.stdout)
+            print("---------------------------------")
             
-            # --- Parsing the JSON output ---
-            try:
-                # CrackMapExec outputs a JSON list, even for one host
-                output_data = json.loads(result.stdout)
-                
-                # Get the first (and likely only) host's data
-                host_data = output_data[0]
-                
-                # Check if the execution was successful
-                if host_data.get('status') == 'Pwn3d!':
-                    # The command output is in the 'output' field
-                    command_output = host_data.get('output', 'No output returned.')
-                    print("\n--- PARSED COMMAND OUTPUT (from JSON) ---")
-                    print(command_output)
-                    print("---------------------------------------")
-                else:
-                    print(f"\n[-] CrackMapExec reported an error: {host_data.get('status')}")
-
-            except (json.JSONDecodeError, IndexError, KeyError) as e:
-                print(f"\n[-] Failed to parse CrackMapExec JSON output: {e}")
-                print("[-] Falling back to raw output:")
-                print(result.stdout)
+            # --- Parsing the output to get only the command's result ---
+            # Split the output into lines and take the last one
+            lines = result.stdout.strip().split('\n')
+            if lines:
+                command_output = lines[-1]
+                print("\n--- PARSED COMMAND OUTPUT ---")
+                print(command_output)
+                print("----------------------------")
+            else:
+                print("\n[-] Could not parse command output from CrackMapExec.")
 
         else:
             print(f"[-] Error executing command.")
