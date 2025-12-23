@@ -43,15 +43,19 @@ def main():
     parser.add_argument("--command", help="Command to execute (e.g., 'whoami')")
     args = parser.parse_args()
 
+    # FIX 1: Check for the command first.
     if not args.command:
         print("[-] Error: --command is required!")
         sys.exit(1)
 
+    # FIX 2: Get the password BEFORE using it in a check.
+    password = args.password if args.password else getpass("Enter password: ")
+
+    # FIX 3: Now you can safely check the host and credentials.
     if args.host and not (args.username and password):
         print("[-] Error: For remote execution, --host, --username, and --password are required!")
         sys.exit(1)
 
-    password = args.password if args.password else getpass("Enter password: ")
     run_command(args.command, args.username, password, args.host)
 
 if __name__ == "__main__":
