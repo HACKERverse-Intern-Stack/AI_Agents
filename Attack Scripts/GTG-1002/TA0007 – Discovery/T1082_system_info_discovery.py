@@ -42,7 +42,7 @@ def run_system_info(target_ip, username, password):
         server_info = samr.hSamrQueryDisplayInformation(
             dce,
             server_handle,
-            samr.DOMAIN_DISPLAY_INFORMATION, # This is the correct information class
+            3, # This is the correct information class
             0, # Index
             1  # EntryCount (we only need the one entry for the server itself)
         )
