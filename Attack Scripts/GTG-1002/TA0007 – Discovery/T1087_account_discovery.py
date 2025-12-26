@@ -54,14 +54,12 @@ def enumerate_users_with_nxc(target, username, password, domain):
                     if match:
                         users.append(match.group(1))
 
-            if users:
-                print(f"\n[+] Found {len(users)} users in domain '{domain}':")
-                for user in sorted(users):
-                    print(f" - {user}")
-            else:
-                print("\n[-] No users were enumerated. The credentials might be valid, but lack permissions.")
+            if result.stdout:
+                print("\n[+] Users enumerated. Showcasing results:")
                 print("[*] netexec output:")
                 print(result.stdout)
+            else:
+                print("\n[-] No users were enumerated. The credentials might be valid, but lack permissions.")
 
         else:
             # If the command fails, print the error from stderr
