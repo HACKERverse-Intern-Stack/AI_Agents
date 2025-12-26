@@ -59,7 +59,7 @@ def enumerate_users_with_nxc(target, username, password, domain):
                 print("[*] netexec output:")
                 print(result.stdout)
             else:
-                print("\n[-] No users were enumerated. The credentials might be valid, but lack permissions.")
+                print("\n[-] No users were enumerated. The credentials might be valid, but lack permissions OR Port 445 (SMB service) potentially closed.")
 
         else:
             # If the command fails, print the error from stderr
