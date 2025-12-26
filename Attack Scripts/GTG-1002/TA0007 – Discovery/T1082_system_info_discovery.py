@@ -11,6 +11,7 @@ def run_system_info(target_ip, username, password):
     rpc_transport = None
     dce = None
     server_handle = None
+    domain_handle = None
     try:
         print(f"[*] Attempting to get system info from {target_ip}...")
         # 1. Define the target string for the SMB transport
@@ -19,7 +20,7 @@ def run_system_info(target_ip, username, password):
         # 2. Create the main transport object
         rpc_transport = transport.DCERPCTransportFactory(string_binding)
 
-        # 3. Set credentials. The domain is omitted for local account authentication.
+        # 3. Set credentials.
         rpc_transport.set_credentials(username, password)
 
         # 4. Connect and bind
@@ -30,30 +31,38 @@ def run_system_info(target_ip, username, password):
         dce.bind(samr.MSRPC_UUID_SAMR)
         print("[*] SAMR connection established.")
 
-        # 5. Use SAMR calls to get server info
-        # First, connect to the SAMR service on the remote server
+        # 5. Connect to the SAMR service to get a server handle
         server_handle = samr.hSamrConnect(dce, f"\\\\{target_ip}")['ServerHandle']
         print("[*] Connected to SAMR server.")
 
-        # Now, query the server for its information using the correct modern function
-        print("[*] Querying server for information...")
-        # The correct function is hSamrQueryDisplayInformation
-        # We ask for the domain display information (index 2) to get the server details
+        # 6. NEW STEP: Use the server handle to get a handle to the domain
+        print("[*] Enumerating domains to get a handle...")
+        # First, we need to find the domain's SID
+        domains = samr.hSamrEnumerateDomainsInSamServer(dce, server_handle)
+        domain_info = domains['Buffer'][0]
+        domain_sid = domain_info['Sid']
+        
+        # Now, open the domain using its SID to get the domain_handle
+        domain_handle = samr.hSamrOpenDomain(dce, server_handle, samr.DOMAIN_READ, domain_sid)['DomainHandle']
+        print("[*] Successfully opened a handle to the domain.")
+
+        # 7. Now, use the DOMAIN_HANDLE to query for display information
+        print("[*] Querying domain for information...")
+        # This will now work because we are passing a DomainHandle
         server_info = samr.hSamrQueryDisplayInformation(
             dce,
-            server_handle,
-            3, # This is the correct information class
-            0, # Index
-            1  # EntryCount (we only need the one entry for the server itself)
+            domain_handle,  # Use the domain_handle here!
+            3,  # The integer value for DOMAIN_DISPLAY_INFORMATION
+            0,  # Index
+            1   # EntryCount
         )
 
-        # Extract and print the details from the new response structure
+        # Extract and print the details
         print("\n[+] System Information Retrieved Successfully!")
-        # The data is now in a list under the 'Buffer' key
         info_data = server_info['Buffer'][0]
-        # The fields are also named differently
-        print(f" Server Name: {info_data['AccountName']}") # This is the server/computer name
         print(f" Domain Name: {info_data['DomainName']}")
+        # Note: The 'AccountName' field in this context will be the name of the domain controller
+        print(f" Domain Controller / Server Name: {info_data['AccountName']}")
 
     except DCERPCException as e:
         print(f"[-] A DCE/RPC error occurred: {e}")
@@ -61,14 +70,20 @@ def run_system_info(target_ip, username, password):
     except Exception as e:
         print(f"[-] An unexpected error occurred: {e}")
     finally:
-        # 6. Clean up connections safely
+        # 8. Clean up connections safely (now closing both handles)
         print("[*] Cleaning up connections...")
+        if domain_handle:
+            try:
+                samr.hSamrCloseHandle(dce, domain_handle)
+                print("[*] SAMR domain handle closed.")
+            except Exception as e:
+                print(f"[-] Error closing domain handle: {e}")
         if server_handle:
             try:
                 samr.hSamrCloseHandle(dce, server_handle)
                 print("[*] SAMR server handle closed.")
             except Exception as e:
-                print(f"[-] Error closing SAMR handle: {e}")
+                print(f"[-] Error closing server handle: {e}")
         if dce:
             try:
                 dce.disconnect()
@@ -81,7 +96,6 @@ def run_system_info(target_ip, username, password):
                 print("[*] Main transport disconnected.")
             except Exception as e:
                 print(f"[-] Error disconnecting transport: {e}")
-
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
