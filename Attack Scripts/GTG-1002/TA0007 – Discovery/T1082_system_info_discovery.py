@@ -1,6 +1,7 @@
 # < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
 # T1082 - System Information Discovery
-# Objective: Gather detailed system configuration. This script uses WMI over SMB to execute systeminfo remotely.
+# Objective: Enumerate system information from a target. This script uses netexec
+# to execute the 'systeminfo' command remotely and parses the output.
 
 #!/usr/bin/env python3
 import sys
