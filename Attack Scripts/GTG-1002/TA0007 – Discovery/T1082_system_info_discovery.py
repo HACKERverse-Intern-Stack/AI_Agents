@@ -2,114 +2,68 @@
 # T1082 - System Information Discovery
 # Objective: Gather detailed system configuration. This script uses WMI over SMB to execute systeminfo remotely.
 
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 import sys
-from impacket.dcerpc.v5 import transport, samr
-from impacket.dcerpc.v5.rpcrt import DCERPCException
+import subprocess
+import re
 
-def run_system_info(target_ip, username, password):
-    rpc_transport = None
-    dce = None
-    server_handle = None
-    domain_handle = None
+def get_system_info_with_nxc(target, username, password, domain):
+    """
+    Gets system information from a target using netexec to execute 'systeminfo'.
+
+    Args:
+        target (str): The IP address or hostname of the target.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        domain (str): The domain for authentication.
+    """
     try:
-        print(f"[*] Attempting to get system info from {target_ip}...")
-        # 1. Define the target string for the SMB transport
-        string_binding = r'ncacn_np:%s[\pipe\samr]' % target_ip
+        # Construct the netexec command to execute 'systeminfo'
+        # -x: Execute a command on the target
+        command = [
+            "netexec", "smb", target,
+            "-u", username,
+            "-p", password,
+            "--domain", domain,
+            "-x", "systeminfo"
+        ]
 
-        # 2. Create the main transport object
-        rpc_transport = transport.DCERPCTransportFactory(string_binding)
+        print(f"[*] Running command: {' '.join(command)}")
 
-        # 3. Set credentials.
-        rpc_transport.set_credentials(username, password)
-
-        # 4. Connect and bind
-        rpc_transport.connect()
-        print("[*] Main transport connected.")
-        dce = rpc_transport.get_dce_rpc()
-        dce.connect()
-        dce.bind(samr.MSRPC_UUID_SAMR)
-        print("[*] SAMR connection established.")
-
-        # 5. Connect to the SAMR service to get a server handle
-        server_handle = samr.hSamrConnect(dce, f"\\\\{target_ip}")['ServerHandle']
-        print("[*] Connected to SAMR server.")
-
-        # 6. Try to enumerate domains. If it fails, fall back to the Builtin domain.
-        try:
-            print("[*] Enumerating domains to get a handle...")
-            domains = samr.hSamrEnumerateDomainsInSamServer(dce, server_handle)
-            # Check if the buffer is empty
-            if not domains['Buffer']:
-                raise Exception("No domains found, likely a workgroup machine.")
-            domain_info = domains['Buffer'][0]
-            domain_sid = domain_info['Sid']
-            print(f"[*] Found domain: {domain_info['Name']}")
-        except Exception as e:
-            print(f"[-] Could not enumerate primary domain ({e}). Falling back to BUILTIN domain.")
-            # Fallback for workgroup computers
-            # The SID for the BUILTIN domain is always S-1-5-32
-            from impacket.dcerpc.v5.dtypes import RPC_SID
-            domain_sid = RPC_SID()
-            domain_sid.fromCanonical('S-1-5-32')
-
-        # 7. Open the domain (either the primary one or BUILTIN)
-        print("[*] Opening a handle to the domain...")
-        domain_handle = samr.hSamrOpenDomain(dce, server_handle, samr.DOMAIN_READ, domain_sid)['DomainHandle']
-        print("[*] Successfully opened a handle to the domain.")
-
-        # 8. Query for display information using the domain handle
-        print("[*] Querying domain for information...")
-        server_info = samr.hSamrQueryDisplayInformation(
-            dce,
-            domain_handle,
-            3,  # The integer value for DOMAIN_DISPLAY_INFORMATION
-            0,  # Index
-            1000 # Get more entries to see local users
+        # Execute the command and capture output
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False  # Don't raise exception on non-zero exit code
         )
 
-        # Extract and print the details
-        print("\n[+] System Information Retrieved Successfully!")
-        print("--- Domain/Local Group Information ---")
-        for info_data in server_info['Buffer']:
-            print(f"  Name: {info_data['AccountName']}, Comment: {info_data['AccountDisplayName']}")
+        # Check if netexec executed the command successfully
+        if result.returncode == 0:
+            if result.stdout:
+                print("\n[+] System information retrieved successfully. Showcasing results:")
+                print("[*] netexec output:")
+                print(result.stdout)
+            else:
+                print("\n[-] The command executed but returned no output.")
+                print("[*] This could mean the 'systeminfo' command failed on the target or the user lacks execution permissions.")
 
-    except DCERPCException as e:
-        print(f"[-] A DCE/RPC error occurred: {e}")
-        print("[*] This could be due to permissions or an issue with the SAMR pipe.")
+        else:
+            # If the command fails, print the error from stderr
+            print(f"\n[-] netexec failed with exit code {result.returncode}")
+            print(f"[-] Error: {result.stderr.strip()}")
+            print("[*] This is often due to incorrect credentials, a network issue, or the target being unreachable.")
+
+    except FileNotFoundError:
+        print("[-] Error: 'netexec' command not found.")
+        print("[*] Please ensure netexec is installed and in your system's PATH.")
     except Exception as e:
         print(f"[-] An unexpected error occurred: {e}")
-    finally:
-        # 9. Clean up connections safely
-        print("[*] Cleaning up connections...")
-        if domain_handle:
-            try:
-                samr.hSamrCloseHandle(dce, domain_handle)
-                print("[*] SAMR domain handle closed.")
-            except Exception as e:
-                print(f"[-] Error closing domain handle: {e}")
-        if server_handle:
-            try:
-                samr.hSamrCloseHandle(dce, server_handle)
-                print("[*] SAMR server handle closed.")
-            except Exception as e:
-                print(f"[-] Error closing server handle: {e}")
-        if dce:
-            try:
-                dce.disconnect()
-                print("[*] SAMR connection disconnected.")
-            except Exception as e:
-                print(f"[-] Error disconnecting DCE: {e}")
-        if rpc_transport:
-            try:
-                rpc_transport.disconnect()
-                print("[*] Main transport disconnected.")
-            except Exception as e:
-                print(f"[-] Error disconnecting transport: {e}")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print("Usage: ./T1082_system_info_discovery.py <target IP> <username> <password>")
+    if len(sys.argv) != 5:
+        print("Usage: ./T1082_nxc_system_info_discovery.py <target> <username> <password> <domain>")
         sys.exit(1)
-
-    run_system_info(sys.argv[1], sys.argv[2], sys.argv[3])
+    
+    # Note: For local accounts, you can pass '.' as the domain.
+    get_system_info_with_nxc(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

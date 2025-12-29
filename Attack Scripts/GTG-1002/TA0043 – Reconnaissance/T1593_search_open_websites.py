@@ -1,7 +1,7 @@
 # < ---- DOCUMENTATION OF MITRE ATT&CK TECHNIQUE ---- >
 # T1593 - Search Open Websites
 # Objective: Adversaries may search through open websites or domains for information about victims. This script simulates using a web search API (or just making an HTTP request) to find information.
-# t1593_search_open_websites.py
+
 import requests
 import urllib.parse
 
