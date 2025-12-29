@@ -47,7 +47,7 @@ def get_system_info_with_nxc(target, username, password, domain):
                 print(result.stdout)
             else:
                 print("\n[-] The command executed but returned no output.")
-                print("[*] This could mean the 'systeminfo' command failed on the target or the user lacks execution permissions.")
+                print("[*] This could mean the 'systeminfo' command failed on the target, the user lacks execution permissions, or port 445 (SMB service) is closed.")
 
         else:
             # If the command fails, print the error from stderr
