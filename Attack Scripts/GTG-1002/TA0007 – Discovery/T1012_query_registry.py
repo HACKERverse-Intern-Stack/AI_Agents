@@ -70,7 +70,7 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
         # Check the return code to determine success or failure.
         if result.returncode == 0:
             print("[+] NetExec command completed successfully.")
-            print("[+] Check the output above for '{username}', '{password}', and other secrets.")
+            print(f"[+] Check the output above for '{username}', '{password}', and other secrets.")
         else:
             print(f"[-] NetExec command failed with exit code {result.returncode}.")
             print("[-] This could be due to authentication failure, network issues, or permissions.")
