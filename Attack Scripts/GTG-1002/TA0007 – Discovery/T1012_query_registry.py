@@ -29,7 +29,7 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
 
     # CORRECTED SYNTAX: The reg-query module options are passed as a single string
     # to the -o flag. The key is 'KEY' and the value is 'VALUE'.
-    key_path = r'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+    key_path = r'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs'
     
     # Construct the module options string
     module_options = f"KEY='{key_path}' VALUE={username}"
