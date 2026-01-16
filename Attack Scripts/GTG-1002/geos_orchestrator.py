@@ -22,29 +22,37 @@ class AttackOrchestrator:
         }
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         
-    def run_script(self, script_path, phase, description):
+    def find_script(self, script_name):
+        """Search for script in all TA directories"""
+        for root, dirs, files in os.walk(self.base_dir):
+            if script_name in files:
+                return os.path.join(root, script_name)
+        return None
+        
+    def run_script(self, script_name, phase, description):
         """Execute a script and capture results"""
         print(f"\n{'='*60}")
         print(f"[{phase}] Executing: {description}")
-        print(f"Script: {script_path}")
+        print(f"Script: {script_name}")
         print(f"{'='*60}")
         
-        # Construct full path from base directory
-        full_path = os.path.join(self.base_dir, script_path)
+        # Find the script
+        full_path = self.find_script(script_name)
         
-        # Check if file exists
-        if not os.path.exists(full_path):
-            print(f"\n✗ ERROR - Script not found: {full_path}")
-            print(f"  Checked path: {full_path}")
+        if not full_path:
+            print(f"\n✗ ERROR - Script not found: {script_name}")
+            print(f"  Searched in: {self.base_dir}")
             self.results["attacks"].append({
                 "phase": phase,
-                "script": script_path,
+                "script": script_name,
                 "description": description,
                 "success": False,
-                "error": f"Script file not found at: {full_path}",
+                "error": f"Script file not found: {script_name}",
                 "timestamp": datetime.now().isoformat()
             })
             return False, "File not found"
+        
+        print(f"Found at: {full_path}")
         
         try:
             # Run the script with target IP as argument
@@ -60,7 +68,8 @@ class AttackOrchestrator:
             
             attack_result = {
                 "phase": phase,
-                "script": script_path,
+                "script": script_name,
+                "full_path": full_path,
                 "description": description,
                 "success": success,
                 "return_code": result.returncode,
@@ -80,7 +89,7 @@ class AttackOrchestrator:
             print(f"\n✗ TIMEOUT - Script exceeded 5 minute limit")
             self.results["attacks"].append({
                 "phase": phase,
-                "script": script_path,
+                "script": script_name,
                 "description": description,
                 "success": False,
                 "error": "Timeout exceeded",
@@ -92,7 +101,7 @@ class AttackOrchestrator:
             print(f"\n✗ ERROR - {str(e)}")
             self.results["attacks"].append({
                 "phase": phase,
-                "script": script_path,
+                "script": script_name,
                 "description": description,
                 "success": False,
                 "error": str(e),
@@ -112,76 +121,76 @@ class AttackOrchestrator:
         
         # PHASE 1: RECONNAISSANCE
         print("\n\n*** PHASE 1: RECONNAISSANCE ***")
-        self.run_script("TA0007 - Discovery/T0842_lnk_creation.py", "Reconnaissance", "Link file creation for reconnaissance")
-        self.run_script("TA0007 - Discovery/T1012_query_registry.py", "Reconnaissance", "Query system registry")
-        self.run_script("TA0007 - Discovery/T1046_network_service_scanning.py", "Reconnaissance", "Network service scanning")
-        self.run_script("TA0007 - Discovery/T1082_system_info_discovery.py", "Reconnaissance", "System information discovery")
-        self.run_script("TA0007 - Discovery/T1087_account_discovery.py", "Reconnaissance", "Account discovery")
-        self.run_script("TA0043 - Reconnaissance/T1590_gather_host_info.py", "Reconnaissance", "Gather victim host information")
-        self.run_script("TA0043 - Reconnaissance/T1593_search_open_websites.py", "Reconnaissance", "Search open websites/domains")
-        self.run_script("TA0043 - Reconnaissance/T1595_active_scanning.py", "Reconnaissance", "Active scanning")
+        self.run_script("T0842_lnk_creation.py", "Reconnaissance", "Link file creation for reconnaissance")
+        self.run_script("T1012_query_registry.py", "Reconnaissance", "Query system registry")
+        self.run_script("T1046_network_service_scanning.py", "Reconnaissance", "Network service scanning")
+        self.run_script("T1082_system_info_discovery.py", "Reconnaissance", "System information discovery")
+        self.run_script("T1087_account_discovery.py", "Reconnaissance", "Account discovery")
+        self.run_script("T1590_gather_host_info.py", "Reconnaissance", "Gather victim host information")
+        self.run_script("T1593_search_open_websites.py", "Reconnaissance", "Search open websites/domains")
+        self.run_script("T1595_active_scanning.py", "Reconnaissance", "Active scanning")
         
         # PHASE 2: INITIAL ACCESS
         print("\n\n*** PHASE 2: INITIAL ACCESS ***")
-        success, _ = self.run_script("TA0001 - Initial Access/T1190_exploit_public_app.py", "Initial Access", "Exploit public-facing application")
+        success, _ = self.run_script("T1190_exploit_public_app.py", "Initial Access", "Exploit public-facing application")
         
         if not success:
             print("\n[!] Initial access failed. Attempting alternative methods...")
-            self.run_script("TA0001 - Initial Access/T1078_valid_accounts.py", "Initial Access", "Valid accounts access")
+            self.run_script("T1078_valid_accounts.py", "Initial Access", "Valid accounts access")
         
         # PHASE 3: EXECUTION
         print("\n\n*** PHASE 3: EXECUTION ***")
-        self.run_script("TA0002 - Execution/T1059_command_interpreter.py", "Execution", "Command interpreter execution")
-        self.run_script("TA0002 - Execution/T1105_ingress_tool_transfer.py", "Execution", "Ingress tool transfer")
-        self.run_script("TA0002 - Execution/T1204_user_execution.py", "Execution", "User execution")
+        self.run_script("T1059_command_interpreter.py", "Execution", "Command interpreter execution")
+        self.run_script("T1105_ingress_tool_transfer.py", "Execution", "Ingress tool transfer")
+        self.run_script("T1204_user_execution.py", "Execution", "User execution")
         
         # PHASE 4: PERSISTENCE
         print("\n\n*** PHASE 4: PERSISTENCE ***")
-        self.run_script("TA0003 - Persistence/T1078_valid_accounts.py", "Persistence", "Maintain valid accounts")
-        self.run_script("TA0003 - Persistence/T1505_install_service.py", "Persistence", "Install persistent service")
+        self.run_script("T1078_valid_accounts.py", "Persistence", "Maintain valid accounts")
+        self.run_script("T1505_install_service.py", "Persistence", "Install persistent service")
         
         # PHASE 5: PRIVILEGE ESCALATION
         print("\n\n*** PHASE 5: PRIVILEGE ESCALATION ***")
-        self.run_script("TA0004 - Privilege Escalation/T1068_privilege_escalation.py", "Privilege Escalation", "Exploit for privilege escalation")
-        self.run_script("TA0004 - Privilege Escalation/T1078_004_cloud_accounts.py", "Privilege Escalation", "Cloud accounts privilege escalation")
+        self.run_script("T1068_privilege_escalation.py", "Privilege Escalation", "Exploit for privilege escalation")
+        self.run_script("T1078_004_cloud_accounts.py", "Privilege Escalation", "Cloud accounts privilege escalation")
         
         # PHASE 6: DEFENSE EVASION
         print("\n\n*** PHASE 6: DEFENSE EVASION ***")
-        self.run_script("TA0005 - Defense Evasion/T1027_obfuscation.py", "Defense Evasion", "Obfuscate files/information")
-        self.run_script("TA0005 - Defense Evasion/T1036_masquerading.py", "Defense Evasion", "Masquerading")
-        self.run_script("TA0005 - Defense Evasion/T1078_valid_accounts.py", "Defense Evasion", "Valid accounts for evasion")
+        self.run_script("T1027_obfuscation.py", "Defense Evasion", "Obfuscate files/information")
+        self.run_script("T1036_masquerading.py", "Defense Evasion", "Masquerading")
+        self.run_script("T1078_valid_accounts.py", "Defense Evasion", "Valid accounts for evasion")
         
         # PHASE 7: CREDENTIAL ACCESS
         print("\n\n*** PHASE 7: CREDENTIAL ACCESS ***")
-        self.run_script("TA0006 - Credential Access/T1003_credential_dumping.py", "Credential Access", "Credential dumping")
-        self.run_script("TA0006 - Credential Access/T1110_brute_force.py", "Credential Access", "Brute force authentication")
+        self.run_script("T1003_credential_dumping.py", "Credential Access", "Credential dumping")
+        self.run_script("T1110_brute_force.py", "Credential Access", "Brute force authentication")
         
         # PHASE 8: LATERAL MOVEMENT
         print("\n\n*** PHASE 8: LATERAL MOVEMENT ***")
-        self.run_script("TA0008 - Lateral Movement/T1021_rdp_login.py", "Lateral Movement", "Remote desktop protocol")
-        self.run_script("TA0008 - Lateral Movement/T1078_valid_accounts.py", "Lateral Movement", "Valid accounts for lateral movement")
+        self.run_script("T1021_rdp_login.py", "Lateral Movement", "Remote desktop protocol")
+        self.run_script("T1078_valid_accounts.py", "Lateral Movement", "Valid accounts for lateral movement")
         
         # PHASE 9: COLLECTION
         print("\n\n*** PHASE 9: COLLECTION ***")
-        self.run_script("TA0009 - Collection/T1039_steal_from_share.py", "Collection", "Data from network shared drive")
-        self.run_script("TA0009 - Collection/T1114_email_collection.py", "Collection", "Email collection")
-        self.run_script("TA0009 - Collection/T1119_automated_collection.py", "Collection", "Automated collection")
-        self.run_script("TA0009 - Collection/T1203_dll_hijack.py", "Collection", "DLL hijacking for collection")
+        self.run_script("T1039_steal_from_share.py", "Collection", "Data from network shared drive")
+        self.run_script("T1114_email_collection.py", "Collection", "Email collection")
+        self.run_script("T1119_automated_collection.py", "Collection", "Automated collection")
+        self.run_script("T1203_dll_hijack.py", "Collection", "DLL hijacking for collection")
         
         # PHASE 10: COMMAND AND CONTROL
         print("\n\n*** PHASE 10: COMMAND AND CONTROL ***")
-        self.run_script("TA0011 - Command and Control/C2_server.py", "Command and Control", "C2 server setup")
-        self.run_script("TA0010 - Exfiltration/T1041_exfiltrate_via_http.py", "Command and Control", "Exfiltration over HTTP")
-        self.run_script("TA0011 - Command and Control/T1071_dns_c2_exfiltrate.py", "Command and Control", "Application layer protocol (DNS)")
-        self.run_script("TA0011 - Command and Control/T1071.001_http_c2_connection.py", "Command and Control", "HTTP C2 connection")
-        self.run_script("TA0011 - Command and Control/T1090_proxy_handler.py", "Command and Control", "Proxy handler")
-        self.run_script("TA0010 - Exfiltration/T1537_exfil_cloud.py", "Command and Control", "Cloud infrastructure exfil")
-        self.run_script("TA0010 - Exfiltration/T1567_exfil_http.py", "Command and Control", "Exfiltration over web service")
-        self.run_script("TA0011 - Command and Control/dns_receiver.py", "Command and Control", "DNS receiver")
+        self.run_script("C2_server.py", "Command and Control", "C2 server setup")
+        self.run_script("T1041_exfiltrate_via_http.py", "Command and Control", "Exfiltration over HTTP")
+        self.run_script("T1071_dns_c2_exfiltrate.py", "Command and Control", "Application layer protocol (DNS)")
+        self.run_script("T1071.001_http_c2_connection.py", "Command and Control", "HTTP C2 connection")
+        self.run_script("T1090_proxy_handler.py", "Command and Control", "Proxy handler")
+        self.run_script("T1537_exfil_cloud.py", "Command and Control", "Cloud infrastructure exfil")
+        self.run_script("T1567_exfil_http.py", "Command and Control", "Exfiltration over web service")
+        self.run_script("dns_receiver.py", "Command and Control", "DNS receiver")
         
         # PHASE 11: EXFILTRATION
         print("\n\n*** PHASE 11: EXFILTRATION ***")
-        self.run_script("TA0010 - Exfiltration/upload_reciever.py", "Exfiltration", "Upload receiver")
+        self.run_script("upload_reciever.py", "Exfiltration", "Upload receiver")
         
         # Save results
         self.save_results()
