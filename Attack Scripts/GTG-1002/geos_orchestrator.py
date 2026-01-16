@@ -20,6 +20,7 @@ class AttackOrchestrator:
             "timestamp": datetime.now().isoformat(),
             "attacks": []
         }
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
         
     def run_script(self, script_path, phase, description):
         """Execute a script and capture results"""
@@ -28,15 +29,19 @@ class AttackOrchestrator:
         print(f"Script: {script_path}")
         print(f"{'='*60}")
         
+        # Construct full path from base directory
+        full_path = os.path.join(self.base_dir, script_path)
+        
         # Check if file exists
-        if not os.path.exists(script_path):
-            print(f"\n✗ ERROR - Script not found: {script_path}")
+        if not os.path.exists(full_path):
+            print(f"\n✗ ERROR - Script not found: {full_path}")
+            print(f"  Checked path: {full_path}")
             self.results["attacks"].append({
                 "phase": phase,
                 "script": script_path,
                 "description": description,
                 "success": False,
-                "error": "Script file not found",
+                "error": f"Script file not found at: {full_path}",
                 "timestamp": datetime.now().isoformat()
             })
             return False, "File not found"
@@ -44,7 +49,7 @@ class AttackOrchestrator:
         try:
             # Run the script with target IP as argument
             result = subprocess.run(
-                [sys.executable, script_path, self.target_ip],
+                [sys.executable, full_path, self.target_ip],
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout per script
@@ -102,6 +107,7 @@ class AttackOrchestrator:
         print(f"# GTG-1002 ATTACK CAMPAIGN ORCHESTRATOR")
         print(f"# Target: {self.target_ip}")
         print(f"# Start Time: {self.results['timestamp']}")
+        print(f"# Base Directory: {self.base_dir}")
         print(f"{'#'*60}")
         
         # PHASE 1: RECONNAISSANCE
@@ -184,12 +190,13 @@ class AttackOrchestrator:
     def save_results(self):
         """Save results to JSON file"""
         output_file = f"gtg1002_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        output_path = os.path.join(self.base_dir, output_file)
         
-        with open(output_file, 'w') as f:
+        with open(output_path, 'w') as f:
             json.dump(self.results, f, indent=2)
         
         print(f"\n\n{'='*60}")
-        print(f"Results saved to: {output_file}")
+        print(f"Results saved to: {output_path}")
         print(f"{'='*60}")
     
     def print_summary(self):
